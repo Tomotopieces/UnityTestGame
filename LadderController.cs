@@ -14,7 +14,6 @@ public class LadderController : MonoBehaviour
         playerAnimator = player.GetComponent<Animator>();
     }
 
-    // Update is called once per frame
     void FixedUpdate()
     {
         crouchCheck();
@@ -41,16 +40,6 @@ public class LadderController : MonoBehaviour
             ladderTop.isTrigger = true;
         }
     }
-
-    ////进入梯子
-    //private void OnTriggerEnter2D(Collider2D collision)
-    //{
-    //    if (collision.gameObject.tag == "Player")
-    //    {
-    //        playerAnimator.SetBool("climbable", true);
-    //        ladderTop.isTrigger = true;
-    //    }
-    //}
 
     //离开梯子
     private void OnTriggerExit2D(Collider2D collision)

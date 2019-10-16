@@ -2,13 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class FrogController : MonoBehaviour
+public class FrogController : EnemyController
 {
     private bool startup = true;
-    private Animator animator;
 
     private int direction;
-    private Rigidbody2D frogBody;
     private Transform LeftBoundary;
     private Transform RightBoundary;
     private float leftBoundary;
@@ -17,11 +15,10 @@ public class FrogController : MonoBehaviour
     public float speed;
     public float jumpForce;
 
-    void Start()
+    protected override void Start()
     {
+        base.Start();
         direction = -1;
-        frogBody = transform.GetComponent<Rigidbody2D>();
-        animator = transform.GetComponent<Animator>();
         LeftBoundary = transform.GetChild(0);
         RightBoundary = transform.GetChild(1);
         leftBoundary = LeftBoundary.position.x;
@@ -40,20 +37,12 @@ public class FrogController : MonoBehaviour
         Movement();
     }
 
-    void Movement()
+    private void Movement()
     {
-        //起跳
-        if (animator.GetBool("idle"))
-        {
-            frogBody.velocity = new Vector2(direction * speed * Time.deltaTime, jumpForce * Time.deltaTime);
-            animator.SetBool("idle", false);
-            animator.SetBool("jumping", true);
-        }
-
         //下落
         if (animator.GetBool("jumping"))
         {
-            if(frogBody.velocity.y < 0)
+            if(enemyBody.velocity.y < 0)
             {
                 animator.SetBool("jumping", false);
                 animator.SetBool("falling", true);
@@ -63,7 +52,7 @@ public class FrogController : MonoBehaviour
         //落地
         if (animator.GetBool("falling"))
         {
-            if(Mathf.Abs(frogBody.velocity.x) < 0.1)
+            if(Mathf.Abs(enemyBody.velocity.x) < 0.1)
             {
                 animator.SetBool("falling", false);
                 animator.SetBool("idle", true);
@@ -74,15 +63,26 @@ public class FrogController : MonoBehaviour
         if(transform.position.x < leftBoundary)
         {
             transform.localScale = new Vector3(-1, 1, 1);
-            frogBody.velocity = new Vector2(-frogBody.velocity.x, frogBody.velocity.y);
+            enemyBody.velocity = new Vector2(-enemyBody.velocity.x, enemyBody.velocity.y);
             direction = 1;
         }
 
         if(transform.position.x > rightBoundary)
         {
             transform.localScale = new Vector3(1, 1, 1);
-            frogBody.velocity = new Vector2(-frogBody.velocity.x, frogBody.velocity.y);
+            enemyBody.velocity = new Vector2(-enemyBody.velocity.x, enemyBody.velocity.y);
             direction = -1;
+        }
+    }
+
+    //起跳
+    private void startJump()
+    {
+        if (animator.GetBool("idle"))
+        {
+            enemyBody.velocity = new Vector2(direction * speed * Time.deltaTime, jumpForce * Time.deltaTime);
+            animator.SetBool("idle", false);
+            animator.SetBool("jumping", true);
         }
     }
 }

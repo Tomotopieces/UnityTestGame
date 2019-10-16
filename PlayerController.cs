@@ -10,6 +10,9 @@ public class PlayerController : MonoBehaviour
     private Rigidbody2D playerBody;
     private Animator animator;
 
+    public AudioSource jumpAudio;
+    public AudioSource hurtAudio;
+
     public float speed;
     public float jumpForce;
 
@@ -91,6 +94,7 @@ public class PlayerController : MonoBehaviour
         //跳跃
         if (Input.GetButtonDown("Jump") && (animator.GetBool("idle") || animator.GetBool("climbingIdle")))
         {
+            jumpAudio.Play();
             playerBody.gravityScale = 2;
             animator.SetBool("idle", false);
             animator.SetBool("jumping", true);
@@ -108,7 +112,7 @@ public class PlayerController : MonoBehaviour
         }
 
         //落地
-        if (animator.GetBool("falling") && Mathf.Abs(playerBody.velocity.y) < 0.1)
+        if (animator.GetBool("falling") && (Mathf.Abs(playerBody.velocity.y) < 0.1 || transform.GetComponent<CircleCollider2D>().IsTouchingLayers(8)))
         {
             animator.SetBool("falling", false);
             animator.SetBool("idle", true);
@@ -162,7 +166,8 @@ public class PlayerController : MonoBehaviour
         //樱桃
         if (collision.tag == "Cherry")
         {
-            Destroy(collision.gameObject);
+            collision.gameObject.GetComponent<AudioSource>().Play();
+            collision.gameObject.GetComponent<Animator>().SetTrigger("get");
             Cherry++;
             CherryCounter.text = Cherry.ToString();
         }
@@ -170,7 +175,8 @@ public class PlayerController : MonoBehaviour
         //宝石
         if(collision.tag == "Gem")
         {
-            Destroy(collision.gameObject);
+            collision.gameObject.GetComponent<AudioSource>().Play();
+            collision.gameObject.GetComponent<Animator>().SetTrigger("get");
             Gem++;
             GemCounter.text = Gem.ToString();
         }
@@ -193,11 +199,12 @@ public class PlayerController : MonoBehaviour
                 animator.SetBool("idle", false);
                 animator.SetBool("jumping", true);
                 playerBody.velocity = new Vector2(playerBody.velocity.x, jumpForce * Time.deltaTime);
-                Destroy(collision.gameObject);
+                collision.gameObject.GetComponent<Animator>().SetTrigger("death");
             }
             //受伤
             else
             {
+                hurtAudio.Play();
                 isHurt = true;
                 playerBody.gravityScale = 2;
                 animator.SetBool("idle", false);
