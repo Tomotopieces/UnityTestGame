@@ -80,7 +80,7 @@ public class FrogController : EnemyController
     {
         if (animator.GetBool("idle"))
         {
-            enemyBody.velocity = new Vector2(direction * speed * Time.deltaTime, jumpForce * Time.deltaTime);
+            enemyBody.velocity = new Vector2(direction * speed * Time.fixedDeltaTime, jumpForce * Time.fixedDeltaTime);
             animator.SetBool("idle", false);
             animator.SetBool("jumping", true);
         }

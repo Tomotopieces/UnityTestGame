@@ -13,6 +13,9 @@ public class PlayerController : MonoBehaviour
     public AudioSource jumpAudio;
     public AudioSource hurtAudio;
 
+    public LayerMask ground;
+    public Transform topPoint;
+
     public float speed;
     public float jumpForce;
 
@@ -52,8 +55,9 @@ public class PlayerController : MonoBehaviour
         if (isHurt)
         {
             //受伤恢复
-            if (Mathf.Abs(playerBody.velocity.x) < 0.1)
+            if (Mathf.Abs(playerBody.velocity.x) < 0.1 || transform.GetComponent<CircleCollider2D>().IsTouchingLayers(8))
             {
+                playerBody.velocity = new Vector2(0, playerBody.velocity.y);
                 animator.SetBool("hurting", false);
                 animator.SetBool("idle", true);
                 animator.SetFloat("running", 0);
@@ -73,15 +77,15 @@ public class PlayerController : MonoBehaviour
             if (animator.GetBool("crouching"))
             {
                 times = 0.2f;
-                playerBody.velocity = new Vector2(HorizontalMove * speed * times * Time.deltaTime, playerBody.velocity.y);
+                playerBody.velocity = new Vector2(HorizontalMove * speed * times * Time.fixedDeltaTime, playerBody.velocity.y);
             }
             else if (animator.GetBool("climbingIdle"))
             {
-                transform.position = new Vector2(transform.position.x + HorizontalMoveRaw * 5 * Time.deltaTime, transform.position.y);
+                transform.position = new Vector2(transform.position.x + HorizontalMoveRaw * 5 * Time.fixedDeltaTime, transform.position.y);
             }
             else
             {
-                playerBody.velocity = new Vector2(HorizontalMove * speed * times * Time.deltaTime, playerBody.velocity.y);
+                playerBody.velocity = new Vector2(HorizontalMove * speed * times * Time.fixedDeltaTime, playerBody.velocity.y);
             }
         }
 
@@ -100,7 +104,7 @@ public class PlayerController : MonoBehaviour
             animator.SetBool("jumping", true);
             animator.SetBool("climbingIdle", false);
             animator.SetBool("climbing", false);
-            playerBody.velocity = new Vector2(playerBody.velocity.x, jumpForce * Time.deltaTime);
+            playerBody.velocity = new Vector2(playerBody.velocity.x, jumpForce * Time.fixedDeltaTime);
         }
 
         //下落
@@ -114,24 +118,28 @@ public class PlayerController : MonoBehaviour
         //落地
         if (animator.GetBool("falling") && (Mathf.Abs(playerBody.velocity.y) < 0.1 || transform.GetComponent<CircleCollider2D>().IsTouchingLayers(8)))
         {
+            playerBody.velocity = new Vector2(playerBody.velocity.x, 0);
             animator.SetBool("falling", false);
             animator.SetBool("idle", true);
         }
 
-        //下蹲
-        if (!(animator.GetBool("climbingIdle")) && VertialMoveRaw < 0)
+        if(!Physics2D.OverlapCircle(topPoint.position, 0.2f, ground))
         {
-            animator.SetBool("idle", false);
-            animator.SetBool("crouching", true);
-            head.enabled = false;
-        }
+            //下蹲
+            if (!(animator.GetBool("climbingIdle")) && Input.GetButtonDown("Crouch") && !animator.GetBool("crouching"))
+            {
+                animator.SetBool("idle", false);
+                animator.SetBool("crouching", true);
+                head.enabled = false;
+            }
 
-        //起立
-        if (animator.GetBool("crouching") && !(VertialMoveRaw < 0))
-        {
-            animator.SetBool("idle", true);
-            animator.SetBool("crouching", false);
-            head.enabled = true;
+            //起立
+            if (animator.GetBool("crouching") && Input.GetButtonUp("Crouch"))
+            {
+                animator.SetBool("idle", true);
+                animator.SetBool("crouching", false);
+                head.enabled = true;
+            }
         }
 
         //上梯子
@@ -151,7 +159,7 @@ public class PlayerController : MonoBehaviour
             if(VertialMoveRaw != 0)
             {
                 animator.SetBool("climbing", true);
-                transform.position = new Vector2(transform.position.x, transform.position.y + VertialMoveRaw * 5 * Time.deltaTime);
+                transform.position = new Vector2(transform.position.x, transform.position.y + VertialMoveRaw * 5 * Time.fixedDeltaTime);
             }
             else
             {
@@ -166,8 +174,6 @@ public class PlayerController : MonoBehaviour
         //樱桃
         if (collision.tag == "Cherry")
         {
-            collision.gameObject.GetComponent<AudioSource>().Play();
-            collision.gameObject.GetComponent<Animator>().SetTrigger("get");
             Cherry++;
             CherryCounter.text = Cherry.ToString();
         }
@@ -175,8 +181,6 @@ public class PlayerController : MonoBehaviour
         //宝石
         if(collision.tag == "Gem")
         {
-            collision.gameObject.GetComponent<AudioSource>().Play();
-            collision.gameObject.GetComponent<Animator>().SetTrigger("get");
             Gem++;
             GemCounter.text = Gem.ToString();
         }
@@ -198,7 +202,7 @@ public class PlayerController : MonoBehaviour
             {
                 animator.SetBool("idle", false);
                 animator.SetBool("jumping", true);
-                playerBody.velocity = new Vector2(playerBody.velocity.x, jumpForce * Time.deltaTime);
+                playerBody.velocity = new Vector2(playerBody.velocity.x, jumpForce * Time.fixedDeltaTime);
                 collision.gameObject.GetComponent<Animator>().SetTrigger("death");
             }
             //受伤
@@ -212,7 +216,7 @@ public class PlayerController : MonoBehaviour
                 animator.SetBool("climbingIdle", false);
                 animator.SetBool("climbing", false);
                 animator.SetBool("hurting", true);
-                playerBody.velocity = new Vector2((transform.position.x > collision.gameObject.transform.position.x ? 1 : -1) * 200 * Time.deltaTime, jumpForce * Time.deltaTime);
+                playerBody.velocity = new Vector2((transform.position.x > collision.gameObject.transform.position.x ? 1 : -1) * 200 * Time.fixedDeltaTime, jumpForce * Time.fixedDeltaTime);
             }
         }
     }
