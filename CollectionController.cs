@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class CollectionController : MonoBehaviour
 {
+    private bool used;
+
     private void Death()
     {
         Destroy(gameObject);
@@ -11,7 +13,9 @@ public class CollectionController : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        gameObject.GetComponent<Collider2D>().enabled = false;
         gameObject.GetComponent<AudioSource>().Play();
         gameObject.GetComponent<Animator>().SetTrigger("get");
+        used = true;
     }
 }

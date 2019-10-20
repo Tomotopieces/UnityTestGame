@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
@@ -12,9 +13,12 @@ public class PlayerController : MonoBehaviour
 
     public AudioSource jumpAudio;
     public AudioSource hurtAudio;
+    public AudioSource deathAudio;
+    public AudioSource mainBGM;
 
     public LayerMask ground;
     public Transform topPoint;
+    public Transform bottomPoint;
 
     public float speed;
     public float jumpForce;
@@ -22,15 +26,32 @@ public class PlayerController : MonoBehaviour
     public Text CherryCounter;
     public Text GemCounter;
 
-    public int Cherry;
-    public int Gem;
+    public int cherryCounter;
+    public int gemCounter;
 
+    //是否受伤或死亡
     public bool isHurt;
+    public bool isDead;
 
     void Start()
     {
         playerBody = transform.GetComponent<Rigidbody2D>();
         animator = transform.GetComponent<Animator>();
+    }
+
+    void Update()
+    {
+        //跳跃
+        if (Input.GetButtonDown("Jump") && (animator.GetBool("idle") || animator.GetBool("climbingIdle") || Physics2D.OverlapCircle(bottomPoint.position, 0.2f, ground)))
+        {
+            jumpAudio.Play();
+            playerBody.gravityScale = 2;
+            animator.SetBool("idle", false);
+            animator.SetBool("jumping", true);
+            animator.SetBool("climbingIdle", false);
+            animator.SetBool("climbing", false);
+            playerBody.velocity = new Vector2(playerBody.velocity.x, jumpForce * Time.fixedDeltaTime);
+        }
     }
 
     void FixedUpdate()  //void Update()
@@ -51,6 +72,11 @@ public class PlayerController : MonoBehaviour
         float VertialMoveRaw = Input.GetAxisRaw("Vertical");
 
         BoxCollider2D head = GetComponent<BoxCollider2D>();
+
+        if (isDead)
+        {
+            return;
+        }
 
         if (isHurt)
         {
@@ -95,18 +121,6 @@ public class PlayerController : MonoBehaviour
             transform.localScale = new Vector3(HorizontalMoveRaw, 1, 1);
         }
 
-        //跳跃
-        if (Input.GetButtonDown("Jump") && (animator.GetBool("idle") || animator.GetBool("climbingIdle")))
-        {
-            jumpAudio.Play();
-            playerBody.gravityScale = 2;
-            animator.SetBool("idle", false);
-            animator.SetBool("jumping", true);
-            animator.SetBool("climbingIdle", false);
-            animator.SetBool("climbing", false);
-            playerBody.velocity = new Vector2(playerBody.velocity.x, jumpForce * Time.fixedDeltaTime);
-        }
-
         //下落
         if (playerBody.velocity.y < 0)
         {
@@ -123,18 +137,18 @@ public class PlayerController : MonoBehaviour
             animator.SetBool("idle", true);
         }
 
-        if(!Physics2D.OverlapCircle(topPoint.position, 0.2f, ground))
+        //隘道判断
+        if (!Physics2D.OverlapCircle(topPoint.position, 0.2f, ground))
         {
             //下蹲
-            if (!(animator.GetBool("climbingIdle")) && Input.GetButtonDown("Crouch") && !animator.GetBool("crouching"))
+            if (!(animator.GetBool("climbingIdle")) && Input.GetButton("Crouch"))
             {
                 animator.SetBool("idle", false);
                 animator.SetBool("crouching", true);
                 head.enabled = false;
             }
-
             //起立
-            if (animator.GetBool("crouching") && Input.GetButtonUp("Crouch"))
+            else if(animator.GetBool("crouching"))
             {
                 animator.SetBool("idle", true);
                 animator.SetBool("crouching", false);
@@ -174,21 +188,31 @@ public class PlayerController : MonoBehaviour
         //樱桃
         if (collision.tag == "Cherry")
         {
-            Cherry++;
-            CherryCounter.text = Cherry.ToString();
+            collision.tag = "Untagged";
+            cherryCounter++;
+            CherryCounter.text = cherryCounter.ToString();
         }
 
         //宝石
         if(collision.tag == "Gem")
         {
-            Gem++;
-            GemCounter.text = Gem.ToString();
+            collision.tag = "Untagged";
+            gemCounter++;
+            GemCounter.text = gemCounter.ToString();
         }
-    }
 
-    //退出Trigger
-    private void OnTriggerExit2D(Collider2D collision)
-    {
+        //掉落死亡
+        if(collision.tag == "DeathBoundary")
+        {
+            isDead = true;
+            Invoke("Death", 2.5f);
+            mainBGM.enabled = false;
+            gameObject.GetComponent<BoxCollider2D>().enabled = false;
+            gameObject.GetComponent<CircleCollider2D>().enabled = false;
+            animator.SetBool("hurting", true);
+            deathAudio.Play();
+            playerBody.velocity = new Vector2(0, 1000 * Time.fixedDeltaTime);
+        }
     }
 
     //触发Collider
@@ -198,7 +222,7 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.tag == "Enemy")
         {
             //踩
-            if (animator.GetBool("falling") && transform.position.y >= (collision.gameObject.transform.position.y + collision.gameObject.transform.GetComponent<BoxCollider2D>().size.y / 2))
+            if (transform.position.y >= (collision.gameObject.transform.position.y + collision.gameObject.transform.GetComponent<BoxCollider2D>().size.y / 2))
             {
                 animator.SetBool("idle", false);
                 animator.SetBool("jumping", true);
@@ -219,6 +243,11 @@ public class PlayerController : MonoBehaviour
                 playerBody.velocity = new Vector2((transform.position.x > collision.gameObject.transform.position.x ? 1 : -1) * 200 * Time.fixedDeltaTime, jumpForce * Time.fixedDeltaTime);
             }
         }
+    }
+
+    private void Death()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }
 

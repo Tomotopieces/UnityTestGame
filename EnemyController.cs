@@ -18,8 +18,8 @@ public class EnemyController : MonoBehaviour
     private void Dying()
     {
         deathAudio.Play();
+        gameObject.GetComponent<Collider2D>().enabled = false;
         gameObject.GetComponent<Rigidbody2D>().gravityScale = 0;
-        gameObject.GetComponent<Rigidbody2D>().velocity = new Vector2(0, 0);
     }
 
     //敌人死亡
