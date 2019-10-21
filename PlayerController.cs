@@ -11,11 +11,6 @@ public class PlayerController : MonoBehaviour
     private Rigidbody2D playerBody;
     private Animator animator;
 
-    public AudioSource jumpAudio;
-    public AudioSource hurtAudio;
-    public AudioSource deathAudio;
-    public AudioSource mainBGM;
-
     public LayerMask ground;
     public Transform topPoint;
     public Transform bottomPoint;
@@ -35,6 +30,12 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
+        cherryCounter = DataManager.cherryCount;
+        CherryCounter.text = cherryCounter.ToString();
+        gemCounter = DataManager.gemCount;
+        GemCounter.text = gemCounter.ToString();
+        transform.position = new Vector2(DataManager.positionX, DataManager.positionY);
+
         playerBody = transform.GetComponent<Rigidbody2D>();
         animator = transform.GetComponent<Animator>();
     }
@@ -44,7 +45,7 @@ public class PlayerController : MonoBehaviour
         //跳跃
         if (Input.GetButtonDown("Jump") && (animator.GetBool("idle") || animator.GetBool("climbingIdle") || Physics2D.OverlapCircle(bottomPoint.position, 0.2f, ground)))
         {
-            jumpAudio.Play();
+            SoundManager.soundManager.JumpAudio();
             playerBody.gravityScale = 2;
             animator.SetBool("idle", false);
             animator.SetBool("jumping", true);
@@ -54,7 +55,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void FixedUpdate()  //void Update()
+    void FixedUpdate()
     {
         if (startup)
         {
@@ -190,6 +191,7 @@ public class PlayerController : MonoBehaviour
         {
             collision.tag = "Untagged";
             cherryCounter++;
+            DataManager.cherryCount = cherryCounter;
             CherryCounter.text = cherryCounter.ToString();
         }
 
@@ -198,6 +200,7 @@ public class PlayerController : MonoBehaviour
         {
             collision.tag = "Untagged";
             gemCounter++;
+            DataManager.gemCount = gemCounter;
             GemCounter.text = gemCounter.ToString();
         }
 
@@ -206,11 +209,11 @@ public class PlayerController : MonoBehaviour
         {
             isDead = true;
             Invoke("Death", 2.5f);
-            mainBGM.enabled = false;
+            SoundManager.soundManager.stopMainBGM();
             gameObject.GetComponent<BoxCollider2D>().enabled = false;
             gameObject.GetComponent<CircleCollider2D>().enabled = false;
             animator.SetBool("hurting", true);
-            deathAudio.Play();
+            SoundManager.soundManager.DeathAudio();
             playerBody.velocity = new Vector2(0, 1000 * Time.fixedDeltaTime);
         }
     }
@@ -232,7 +235,7 @@ public class PlayerController : MonoBehaviour
             //受伤
             else
             {
-                hurtAudio.Play();
+                SoundManager.soundManager.HurtAudio();
                 isHurt = true;
                 playerBody.gravityScale = 2;
                 animator.SetBool("idle", false);

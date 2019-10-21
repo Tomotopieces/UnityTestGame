@@ -14,7 +14,14 @@ public class CollectionController : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D collision)
     {
         gameObject.GetComponent<Collider2D>().enabled = false;
-        gameObject.GetComponent<AudioSource>().Play();
+        if(GetType() == typeof(CherryController))
+        {
+            SoundManager.soundManager.CherryAudio();
+        }
+        else
+        {
+            SoundManager.soundManager.GemAudio();
+        }
         gameObject.GetComponent<Animator>().SetTrigger("get");
         used = true;
     }

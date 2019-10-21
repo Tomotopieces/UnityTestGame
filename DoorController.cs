@@ -6,8 +6,9 @@ using UnityEngine.SceneManagement;
 public class DoorController : MonoBehaviour
 {
     public GameObject enterDialog;
-    public int linkSceneNumber;
-    public Transform linkToPoint;
+    public int linkToScene;
+    public float linkToX;
+    public float linkToY;
 
     private bool getPlayer = false;
     private GameObject player;
@@ -17,7 +18,9 @@ public class DoorController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.E) && getPlayer)
         {
             getPlayer = false;
-            SceneManager.LoadScene(linkSceneNumber);
+            DataManager.positionX = linkToX;
+            DataManager.positionY = linkToY;
+            SceneManager.LoadScene(linkToScene);
         }
     }
 
